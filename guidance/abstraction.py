@@ -34,7 +34,7 @@ def encode_label(label):
     return labels_dict[key]
 
 
-def abstract_chart_pan_zoom(pan_zoom: PanZoom, max_x: int, max_y: float) -> AbstractPanZoom:
+def abstract_chart_pan_zoom(pan_zoom: PanZoom, chart_range: [float, float, float, float]) -> AbstractPanZoom:
     """
     Converts absolute coordinates to relative values
     """
@@ -43,25 +43,25 @@ def abstract_chart_pan_zoom(pan_zoom: PanZoom, max_x: int, max_y: float) -> Abst
         y=0,
         zoom=pan_zoom.zoom
     )
-    if max_x > 0:
-        abstract_pan_zoom.x = pan_zoom.x / max_x
-    if max_y > 0:
-        abstract_pan_zoom.y = pan_zoom.y / max_y
+    if pan_zoom.x > 0:
+        abstract_pan_zoom.x = (pan_zoom.x - chart_range[0]) / (chart_range[1] - chart_range[0])
+    if pan_zoom.y > 0:
+        abstract_pan_zoom.y = (pan_zoom.y - chart_range[2]) / (chart_range[3] - chart_range[2])
     return abstract_pan_zoom
 
 
-def abstract_chart_labels(labels: List[Label], data_length: int, dimensions: List[int]) -> List[AbstractLabel]:
+def abstract_chart_labels(labels: List[Label], dimensions: List[int], chart_range: [float, float, float, float]) -> List[AbstractLabel]:
     """
     Abstracts all labels replacing absolute with relative values and encoding data specific values
     """
     abstract_labels = []
-    if labels:
+    if len(labels) > 0:
         for label in labels:
             abstract_label = AbstractLabel(
                 label_type=encode_label(label),
                 label_severity=label.label_class.severity,
-                start=label.start / data_length,
-                end=label.end / data_length,
+                start=(label.start - chart_range[0]) / (chart_range[1] - chart_range[0]),
+                end=(label.end - chart_range[0]) / (chart_range[1] - chart_range[0]),
                 dimensions=[dimension_dict.get(dimension) for dimension in label.dimensions]
             )
             abstract_labels.append(abstract_label)
@@ -78,12 +78,17 @@ def abstract_chart_labels(labels: List[Label], data_length: int, dimensions: Lis
 
 
 def abstract_state_chart(chart: Chart) -> AbstractChart:
-    chart_range = [float(chart.data[0][0][0]), float(chart.data[0][-1][0])]
+    values = []
+    for series in chart.data:
+        values += series
+    x_values = [float(data[0]) for data in values]
+    y_values = [data[1] for data in values]
+    chart_range = [min(x_values), max(x_values), min(y_values), max(y_values)]
     abstract_chart = AbstractChart(
         dimensions=encode_dimensions(chart.dimensions),
         data_distances=[],
-        labels=abstract_chart_labels([label for label in chart.labels if label.start > chart_range[0] or label.end < chart_range[1]], max_x, encode_dimensions(chart.dimensions)),
-        panZoom=abstract_chart_pan_zoom(chart.panZoom, max_x, max_y)
+        labels=abstract_chart_labels([label for label in chart.labels if label.start >= chart_range[0] or label.end <= chart_range[1]], encode_dimensions(chart.dimensions), chart_range),
+        panZoom=abstract_chart_pan_zoom(chart.panZoom, chart_range)
     )
     return abstract_chart
 
@@ -126,8 +131,9 @@ def abstract_interaction_data(interaction_data: InteractionData) -> AbstractInte
 
 
 if __name__ == '__main__':
-    with open("../data/interaction_test/interaction_data.pkl", "rb") as f:
+    with open("../data/deepdrawing/interaction/interaction_data.pkl", "rb") as f:
         interaction_data = pickle.load(f)
 
     # Abstract graph
+    print("test")
     abstract_data = abstract_interaction_data(interaction_data)

@@ -11,7 +11,7 @@ from matplotlib.patches import Rectangle
 
 from guidance.recurring_pattern import Pattern
 from model.mouse_event_record import MouseEventType
-from model.state import State, Severity, Action
+from model.state import State, Severity, Action, Session
 
 
 def myplot(x, y, bins):
@@ -147,13 +147,13 @@ def visualize_state_list(states: List[State], actions: List[Action], pattern_cla
 
     plt.figlegend(legend_lines, legend_names, loc=(0.8, 0.8))
     plt.savefig(f'fig{i}.png')
-    # plt.show()
+    plt.show()
 
 
-def visualize_eda_session(adapted_patterns: List[List[State]], actions_list: List[List[Action]], patterns: List[Pattern]):
+def visualize_eda_session(adapted_patterns: List[Session], patterns: List[Pattern]):
     i = 7
-    for adapted_pattern, actions, pattern in zip(adapted_patterns, actions_list, patterns):
-        visualize_state_list(adapted_pattern, actions, pattern.pattern_class, i)
+    for adapted_pattern, pattern in zip(adapted_patterns, patterns):
+        visualize_state_list(adapted_pattern.states, adapted_pattern.actions, pattern.pattern_class, i)
         i += 1
 
 
@@ -164,4 +164,4 @@ if __name__ == '__main__':
     with open("../data/metalarcwelding/interaction/classified_patterns.pkl", "rb") as f:
         patterns: List[Pattern] = pickle.load(f)
 
-    visualize_eda_session(adapted_patterns, actions_list, patterns)
+    visualize_eda_session(adapted_patterns, patterns)

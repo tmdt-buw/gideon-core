@@ -123,13 +123,13 @@ def visualize_state_list(states: List[State], actions: List[Action], pattern_cla
         axe.remove()
 
     plt.figlegend(legend_lines, legend_names, loc=(0.8, 0.8))
-    # plt.savefig(f'fig{i}.png')
+    plt.savefig(f'fig{i}.png')
     plt.show()
 
 
 def visualize_eda_session(adapted_patterns: List[Session], patterns: List[Pattern]):
     i = 1
-    for adapted_pattern, actions, pattern in zip(adapted_patterns, patterns):
+    for adapted_pattern, pattern in zip(adapted_patterns, patterns):
         visualize_state_list(adapted_pattern.states, adapted_pattern.actions, pattern.pattern_class, i)
         i += 1
 
